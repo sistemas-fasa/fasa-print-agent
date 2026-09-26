@@ -1,0 +1,30 @@
+# Binarios / build
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ruff
+.ruff_cache/
+
+# Entorno local (nunca commitear credenciales reales)
+.env
+agent.env
+
+# Logs locales
+logs/
+*.log
+
+# Windows / editores
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
