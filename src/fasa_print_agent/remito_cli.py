@@ -153,7 +153,7 @@ def cmd_print_pdf(args: argparse.Namespace) -> int:
                   e.code, printer, args.print_remito_pdf, e)
         return 1
     dt = time.monotonic() - t0
-    print(f"SPOOL_OK: {args.print_remito_pdf} → {res.printer_name!r} "
+    print(f"SPOOL_OK: {args.print_remito_pdf} -> {res.printer_name!r} "
           f"copias={res.copies} paginas={res.pages_spooled} "
           f"windows_job_id={res.windows_job_id} ({dt:.1f}s)")
     print("ENVIADO_SPOOLER: Windows aceptó el trabajo. Verificar papel físico.")

@@ -12,6 +12,8 @@ from fasa_print_agent.print_backend import (  # noqa: E402
     PrintError,
     SimulatedBackend,
     SpoolResult,
+    _is_a5_size,
+    _page_dest_rect,
     _save_pixmap_as_bmp,
     get_backend,
 )
@@ -105,3 +107,31 @@ def test_get_backend_returns_simulated_off_windows(monkeypatch):
 
     monkeypatch.setattr(pb.os, "name", "posix")
     assert isinstance(get_backend(), SimulatedBackend)
+
+
+def test_is_a5_size_accepts_physical_and_printable_area():
+    assert _is_a5_size(210, 148)          # hoja física exacta
+    assert _is_a5_size(204, 142)          # Epson L395: área imprimible A5
+    assert _is_a5_size(202, 140)          # RICOH: área imprimible A5
+    assert not _is_a5_size(291, 204)      # A4 apaisado: rechazar
+    assert not _is_a5_size(210, 297)      # A4 vertical: rechazar
+
+
+def test_page_dest_rect_is_1_to_1_mm_with_margin_offsets():
+    class FakeDC:
+        def __init__(self, caps):
+            self.caps = caps
+
+        def GetDeviceCaps(self, n):
+            return self.caps[n]
+
+    # L395: 360 dpi, márgenes no imprimibles 42/43 px.
+    dc = FakeDC({88: 360, 90: 360, 112: 42, 113: 43})
+    x, y, w, h = _page_dest_rect(dc)
+    assert (x, y) == (-42, -43)
+    assert w == round(210 * 360 / 25.4) == 2976
+    assert h == round(148 * 360 / 25.4) == 2098
+    # Sin márgenes (borderless): origen en cero.
+    dc2 = FakeDC({88: 600, 90: 600, 112: 0, 113: 0})
+    assert _page_dest_rect(dc2) == (0, 0, round(210 * 600 / 25.4),
+                                    round(148 * 600 / 25.4))

@@ -104,14 +104,26 @@ issue de calibración para fijarlo como default.
 - Si el papel sale en blanco o desplazado: es calibración
   (paso 5), no reintentar como error de spooler.
 
-## Decisiones técnicas del spike
+## Decisiones técnicas del spike (verificadas 29/09/2026)
 
 - Sin `ShellExecute("print")`: dependía del visor PDF asociado y sus
   diálogos; inaceptable desde un servicio.
 - Sin SumatraPDF obligatorio: quedó solo como fallback explícito si
   `SUMATRA_PDF_PATH` está configurado.
 - Mecanismo: PyMuPDF rasteriza a BMP 24-bit (escritor propio, sin
-  Pillow) → GDI `StretchBlt` sobre DC con DEVMODE A5 apaisado en
-  memoria (no persiste cambios en la impresora).
-- Generación (reportlab, multiplataforma) separada del envío (GDI,
-  solo Windows) detrás de la interfaz `PrintBackend`.
+  Pillow) → GDI `StretchBlt` sobre DC con papel A5 apaisado.
+- pywin32 312 no acepta DEVMODE en `CreatePrinterDC` (1 solo argumento),
+  así que el DC se crea por-job vía ctypes: `winspool.DocumentPropertiesW`
+  (DEVMODE del driver con su parte privada) + `gdi32.CreateDCW` con el
+  DEVMODE parcheado en memoria. **Nunca `SetPrinter`: nada persiste.**
+- Cadena por impresora (con verificación de tamaño real del DC):
+  1. A5-enum (`DMPAPER_A5`); 2. tamaño usuario 210x148 mm (los Epson
+  como L395 ignoran el enum y solo aceptan este); 3. defaults con aviso.
+  RICOH acepta A5-enum; L395 requirió tamaño usuario (verificado:
+  DC 204x142 = área imprimible A5).
+- Rect destino 1:1 en mm sobre la hoja física completa, compensando
+  márgenes no imprimibles (`PHYSICALOFFSETX/Y`); GDI recorta lo que caiga
+  fuera. El layout deja ≥9 mm de margen, dentro de lo imprimible.
+- `windows_job_id`: pywin32 `StartDoc` retorna None; el id real se
+  recupera best-effort con `EnumJobs` tras `EndDoc`.
+- Salida de consola compatible cp1252 (sin flechas unicode).
