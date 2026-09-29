@@ -23,6 +23,12 @@ from .remito_layout import (
 MM_TO_PT = 72.0 / 25.4
 
 
+class TooManyItemsError(ValueError):
+    """El payload supera items_max_rows: nunca truncar en silencio."""
+
+    code = "PAYLOAD_INVALIDO"
+
+
 def page_size_pt() -> tuple[float, float]:
     """Tamaño de página en puntos: (ancho, alto) = (210mm, 148mm)."""
     return (PAGE_WIDTH_MM * MM_TO_PT, PAGE_HEIGHT_MM * MM_TO_PT)
@@ -47,6 +53,10 @@ def build_remito_pdf(data: RemitoCtaCte, output_path: str | Path,
     errors = lay.check_bounds()
     if errors:
         raise ValueError("Layout fuera del papel: " + "; ".join(errors))
+    if len(data.items) > lay.items_max_rows:
+        raise TooManyItemsError(
+            f"El remito trae {len(data.items)} ítems y el máximo es "
+            f"{lay.items_max_rows}: se rechaza, no se trunca.")
 
     width_pt, height_pt = page_size_pt()
     c = canvas.Canvas(str(out), pagesize=(width_pt, height_pt))
@@ -108,7 +118,7 @@ def build_remito_pdf(data: RemitoCtaCte, output_path: str | Path,
          "DETALLE", lay.font_items_size, bold=True, max_width_mm=130.0)
 
     # Ítems (zona central).
-    for i, item in enumerate(data.items[: lay.items_max_rows]):
+    for i, item in enumerate(data.items):
         row_y = lay.items_origin.y_mm + i * lay.items_row_height_mm
         text(lay.col_cantidad_x_mm + lay.col_cantidad_w_mm, row_y,
              item.cantidad, lay.font_items_size, align="right")

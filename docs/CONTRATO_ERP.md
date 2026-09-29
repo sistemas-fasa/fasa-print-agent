@@ -40,7 +40,10 @@ INSERT INTO print_jobs (
   `localidad`; el agente solo dibuja el string (más `cliente_cp`
   como `"CP - LOCALIDAD"` si ambos vienen).
 - Campos vacíos/ausentes no se imprimen (sin error).
-- Hasta 10 ítems por remito (el resto se ignora; avisar si necesitan más).
+- **Límite: 12 ítems por remito** (zona central 58..113 mm, pitch 5 mm,
+  última fila libre de observaciones). Más de 12 → el agente rechaza con
+  `PAYLOAD_INVALIDO` y **no imprime nada**: nunca trunca en silencio.
+  El ERP debe limitar a 12 ítems por remito antes de insertar el job.
 
 ## Lo que devuelve el agente (leer para la UI)
 

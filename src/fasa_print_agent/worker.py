@@ -80,7 +80,8 @@ def _resolve_pdf_path(job: dict[str, Any]) -> tuple[str, Any | None]:
             f"{job.get('documento_id')}.pdf")
     except Exception as e:
         tmp.cleanup()
-        raise _PdfError("PDF_GENERACION_ERROR", str(e)[:500]) from e
+        code = getattr(e, "code", "PDF_GENERACION_ERROR")
+        raise _PdfError(code, str(e)[:500]) from e
     return str(out), tmp
 
 

@@ -132,6 +132,19 @@ def test_payload_invalido_es_error_terminal(monkeypatch):
     assert "PAYLOAD_INVALIDO" in str(conn.executed[-1][1])
 
 
+def test_mas_de_12_items_no_se_imprime(monkeypatch):
+    _mock_print_env(monkeypatch)
+    items = [{"cantidad": "1,00", "articulo": f"A{i}",
+              "detalle": f"D{i}"} for i in range(13)]
+    payload = dict(_sample_payload(), items=items)
+    job = _payload_job(payload)
+    conn = FakeConn([one({"id": 1}), upd(1), one(job),
+                     one({"impresora": "A"}), one({"nombre": "Imp_Real"}),
+                     upd(1)])
+    assert worker.process_one(conn, _cfg()) is True
+    assert "PAYLOAD_INVALIDO" in str(conn.executed[-1][1])
+
+
 def test_sin_documento_es_error_terminal():
     job = _job(archivo_path="", payload_json=None)
     conn = FakeConn([one({"id": 1}), upd(1), one(job), upd(1)])

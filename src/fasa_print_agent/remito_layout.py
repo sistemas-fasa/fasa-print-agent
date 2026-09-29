@@ -59,11 +59,13 @@ class RemitoLayout:
     cliente_cuit: Position = Position(163.0, 41.0)
     cliente_cond_iva: Position = Position(163.0, 48.0)
 
-    # Detalle de artículos (tabla, zona central).
+    # Detalle de artículos (tabla, zona central). Pitch 5 mm: 12 filas
+    # (58..113) sin chocar observaciones (121). La zona no trae líneas
+    # preimpresas, por eso el pitch es libre (a validar en papel).
     items_header_y_mm: float = 53.0
     items_origin: Position = Position(12.0, 58.0)
-    items_row_height_mm: float = 6.0
-    items_max_rows: int = 10
+    items_row_height_mm: float = 5.0
+    items_max_rows: int = 12
     col_cantidad_x_mm: float = 12.0
     col_cantidad_w_mm: float = 22.0
     col_articulo_x_mm: float = 36.0

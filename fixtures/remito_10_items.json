@@ -1,0 +1,69 @@
+{
+  "numero": "0004-00000010",
+  "fecha": "29/09/2026",
+  "cliente_nombre": "VOGEL JOSE OSCAR",
+  "cliente_codigo": "00040",
+  "cliente_cuit": "20-23347203-5",
+  "cliente_cond_iva": "",
+  "cliente_domicilio": "SUIZA S/N",
+  "cliente_telefono": "3743667526",
+  "cliente_cp": "",
+  "cliente_localidad": "GARUHAPE",
+  "items": [
+    {
+      "cantidad": "2,00",
+      "articulo": "AR00001",
+      "detalle": "Artículo sintético 1"
+    },
+    {
+      "cantidad": "4,00",
+      "articulo": "AR00002",
+      "detalle": "Artículo sintético 2"
+    },
+    {
+      "cantidad": "6,00",
+      "articulo": "AR00003",
+      "detalle": "Perfil ángulo galvanizado de ala ancha para estructuras metálicas pesadas con tratamiento anticorrosivo doble mano"
+    },
+    {
+      "cantidad": "8,00",
+      "articulo": "AR00004",
+      "detalle": "Artículo sintético 4"
+    },
+    {
+      "cantidad": "10,00",
+      "articulo": "AR00005",
+      "detalle": "Artículo sintético 5"
+    },
+    {
+      "cantidad": "12,00",
+      "articulo": "AR00006",
+      "detalle": "Perfil ángulo galvanizado de ala ancha para estructuras metálicas pesadas con tratamiento anticorrosivo doble mano"
+    },
+    {
+      "cantidad": "14,00",
+      "articulo": "AR00007",
+      "detalle": "Artículo sintético 7"
+    },
+    {
+      "cantidad": "16,00",
+      "articulo": "AR00008",
+      "detalle": "Artículo sintético 8"
+    },
+    {
+      "cantidad": "18,00",
+      "articulo": "AR00009",
+      "detalle": "Perfil ángulo galvanizado de ala ancha para estructuras metálicas pesadas con tratamiento anticorrosivo doble mano"
+    },
+    {
+      "cantidad": "20,00",
+      "articulo": "AR00010",
+      "detalle": "Artículo sintético 10"
+    }
+  ],
+  "observaciones": "",
+  "transp_nombre": "CENTRAL ARGENTINO S.A.",
+  "transp_cuit": "30-54650428-6",
+  "transp_domicilio": "AV BUCHARDO 2413",
+  "transp_chofer": ""
+}
