@@ -60,9 +60,10 @@ class PrintBackend(abc.ABC):
 
     @abc.abstractmethod
     def spool_pdf(self, pdf_path: str, printer_name: str, copies: int = 1,
-                  dpi: int = 300) -> SpoolResult:
+                  dpi: int = 300, dc_mode: str = "auto") -> SpoolResult:
         """Envía el PDF al spooler. Retorna SpoolResult si Windows lo aceptó,
-        lanza PrintError en caso contrario."""
+        lanza PrintError en caso contrario. `dc_mode` selecciona la
+        estrategia de papel/orientación del DC (solo Windows)."""
         ...
 
 
@@ -73,7 +74,7 @@ class SimulatedBackend(PrintBackend):
         return []
 
     def spool_pdf(self, pdf_path: str, printer_name: str, copies: int = 1,
-                  dpi: int = 300) -> SpoolResult:
+                  dpi: int = 300, dc_mode: str = "auto") -> SpoolResult:
         if not Path(pdf_path).is_file():
             raise PrintError("FILE_NOT_FOUND", f"PDF no existe: {pdf_path}")
         raise PrintError("NO_PRINT_BACKEND",
@@ -98,7 +99,7 @@ class WindowsGdiBackend(PrintBackend):
         return sorted({p[2] for p in printers if len(p) >= 3 and p[2]})
 
     def spool_pdf(self, pdf_path: str, printer_name: str, copies: int = 1,
-                  dpi: int = 300) -> SpoolResult:
+                  dpi: int = 300, dc_mode: str = "auto") -> SpoolResult:
         import win32con  # type: ignore
         import win32ui  # type: ignore
 
@@ -141,7 +142,7 @@ class WindowsGdiBackend(PrintBackend):
             # 2) DC de impresora en A5 apaisado (DEVMODE por-job en
             #    memoria; nunca persiste cambios en la impresora).
             try:
-                hdc, release_dc = self._open_printer_dc(printer_name)
+                hdc, release_dc = self._open_printer_dc(printer_name, dc_mode)
             except PrintError:
                 raise
             except Exception as e:
@@ -252,23 +253,41 @@ class WindowsGdiBackend(PrintBackend):
                              f"No se pudo rasterizar el PDF: {e}") from e
         return out
 
-    def _open_printer_dc(self, printer_name: str):
+    def _open_printer_dc(self, printer_name: str, dc_mode: str = "auto"):
         """Abre un DC de impresora y retorna `(dc, release_dc)`.
 
-        Estrategia (verificada contra drivers reales):
-        1. DEVMODE A5-enum por-job vía ctypes (sin persistir nada).
-        2. Si el driver lo ignora (verificación de tamaño): DEVMODE con
-           tamaño usuario 210x148 mm (algunos Epson solo aceptan este).
-        3. Fallback: defaults del driver (advierte en logs).
+        Prueba las estrategias de `dc_mode` con verificación de tamaño
+        real; fallback a defaults del driver (advierte en logs).
+        DEVMODE siempre por-job en memoria: nada persiste.
+
+        Estrategias (etiqueta, orientación, papel, largo, ancho), con
+        largo/ancho en décimas de mm (0 = no tocar). Verificado 29/09/2026:
+        la Epson L395 no trae A5: solo acepta tamaño usuario; además rota
+        los jobs apaisados, por eso existe "user-portrait" (vertical con
+        el mismo tamaño: el DC queda 210x148 sin rotación del driver).
         """
         import win32ui  # type: ignore
 
-        for label, make_buf in (
-            ("A5-enum", lambda: _devmode_buffer(printer_name, "a5")),
-            ("USER-210x148", lambda: _devmode_buffer(printer_name, "user")),
-        ):
+        strategies: dict[str, list[tuple[str, int, int, int, int]]] = {
+            "auto": [
+                ("A5-enum", 2, _DMPAPER_A5, 0, 0),
+                ("USER-210x148-apais", 2, _DMPAPER_USER, 2100, 1480),
+            ],
+            "a5": [("A5-enum", 2, _DMPAPER_A5, 0, 0)],
+            "user-landscape": [
+                ("USER-210x148-apais", 2, _DMPAPER_USER, 2100, 1480)],
+            "user-portrait": [
+                ("USER-210x148-vert", 1, _DMPAPER_USER, 1480, 2100)],
+        }
+        chosen = strategies.get(dc_mode)
+        if chosen is None:
+            raise PrintError("DC_MODE_INVALID",
+                             f"dc_mode={dc_mode!r}, válidos: "
+                             f"{sorted(strategies)}")
+
+        for label, orient, paper, plen, pwid in chosen:
             try:
-                buf = make_buf()
+                buf = _devmode_buffer(printer_name, orient, paper, plen, pwid)
                 raw_hdc = _create_dc_with_devmode(printer_name, buf)
             except Exception as e:
                 log.warning("DC %s (%s) no disponible: %s",
@@ -400,11 +419,13 @@ def _win32_dlls():
     return _gdi32, _winspool
 
 
-def _devmode_buffer(printer_name: str, mode: str):
-    """DEVMODE del driver parcheado a A5 apaisado (buffer ctypes, en memoria).
+def _devmode_buffer(printer_name: str, orient: int, paper: int,
+                    plen: int, pwid: int):
+    """DEVMODE del driver parcheado (buffer ctypes, solo en memoria).
 
-    `mode="a5"`: tamaño enum DMPAPER_A5. `mode="user"`: tamaño usuario
-    explícito 210x148 mm (drivers Epson que ignoran el enum).
+    `orient`: 1 vertical, 2 apaisado. `paper`: id DMPAPER_* (256 = usuario).
+    `plen`/`pwid`: largo/ancho en décimas de mm (0 = no tocar; requiere
+    flags DM_PAPERLENGTH/DM_PAPERWIDTH).
     Lanza excepción si el driver no lo permite (el caller hace fallback).
     """
     import ctypes
@@ -430,20 +451,14 @@ def _devmode_buffer(printer_name: str, mode: str):
         except Exception:
             pass
     fields, = struct.unpack_from("<I", buf, _OFF_FIELDS)
-    if mode == "user":
-        struct.pack_into("<I", buf, _OFF_FIELDS,
-                         fields | _DM_PAPERSIZE | _DM_ORIENTATION
-                         | _DM_PAPERLENGTH | _DM_PAPERWIDTH)
-        struct.pack_into("<H", buf, _OFF_ORIENTATION, _DMORIENT_LANDSCAPE)
-        struct.pack_into("<H", buf, _OFF_PAPERSIZE, _DMPAPER_USER)
-        # Largo/ancho del papel en décimas de mm (verificado en Epson L395).
-        struct.pack_into("<H", buf, _OFF_PAPERLENGTH, 2100)
-        struct.pack_into("<H", buf, _OFF_PAPERWIDTH, 1480)
-    else:
-        struct.pack_into("<I", buf, _OFF_FIELDS,
-                         fields | _DM_PAPERSIZE | _DM_ORIENTATION)
-        struct.pack_into("<H", buf, _OFF_ORIENTATION, _DMORIENT_LANDSCAPE)
-        struct.pack_into("<H", buf, _OFF_PAPERSIZE, _DMPAPER_A5)
+    flags = fields | _DM_PAPERSIZE | _DM_ORIENTATION
+    if plen or pwid:
+        flags |= _DM_PAPERLENGTH | _DM_PAPERWIDTH
+        struct.pack_into("<H", buf, _OFF_PAPERLENGTH, plen)
+        struct.pack_into("<H", buf, _OFF_PAPERWIDTH, pwid)
+    struct.pack_into("<I", buf, _OFF_FIELDS, flags)
+    struct.pack_into("<H", buf, _OFF_ORIENTATION, orient)
+    struct.pack_into("<H", buf, _OFF_PAPERSIZE, paper)
     return buf
 
 

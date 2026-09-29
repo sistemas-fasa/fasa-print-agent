@@ -49,6 +49,10 @@ def add_remito_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--copies", type=int, default=1)
     p.add_argument("--dpi", type=int, default=300,
                    help="DPI de rasterizado GDI (72-600, defecto 300)")
+    p.add_argument("--dc-mode", default="auto",
+                   choices=["auto", "a5", "user-landscape", "user-portrait"],
+                   help="Estrategia papel/orientacion del DC "
+                        "(user-portrait: Epson sin A5 que rota apaisados)")
     p.add_argument("--no-print", action="store_true",
                    help="Con --print-remito-test: solo genera, no imprime")
     p.add_argument("--write-remito-fixture", default=None, metavar="JSON",
@@ -145,8 +149,8 @@ def cmd_print_pdf(args: argparse.Namespace) -> int:
     t0 = time.monotonic()
     try:
         res = windows_print.spool_pdf_with_result(
-            args.print_remito_pdf, printer,
-            copies=args.copies, dpi=args.dpi)
+            args.print_remito_pdf, printer, copies=args.copies, dpi=args.dpi,
+            dc_mode=args.dc_mode)
     except windows_print.PrintError as e:
         print(f"SPOOL_ERROR code={e.code}: {e}", file=sys.stderr)
         log.error("RESULT=ERROR code=%s printer=%s pdf=%s err=%s",

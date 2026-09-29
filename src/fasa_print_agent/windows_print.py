@@ -32,7 +32,8 @@ def printer_exists(name: str) -> bool:
 
 def spool_pdf_with_result(pdf_path: str, printer_name: str, copies: int = 1,
                           dpi: int = 300,
-                          sumatra_path: str = "") -> SpoolResult:
+                          sumatra_path: str = "",
+                          dc_mode: str = "auto") -> SpoolResult:
     """Envía al spooler y retorna detalle (incluye job id de Windows)."""
     pdf = Path(pdf_path)
     if not pdf.is_file():
@@ -45,15 +46,15 @@ def spool_pdf_with_result(pdf_path: str, printer_name: str, copies: int = 1,
                            pages_spooled=0, windows_job_id=0)
 
     return get_backend().spool_pdf(str(pdf), printer_name,
-                                   copies=copies, dpi=dpi)
+                                   copies=copies, dpi=dpi, dc_mode=dc_mode)
 
 
 def print_pdf(pdf_path: str, printer_name: str, copies: int = 1,
               sumatra_path: str = "", timeout: int = 60,
-              dpi: int = 300) -> None:
+              dpi: int = 300, dc_mode: str = "auto") -> None:
     """Compatibilidad con `worker`: lanza PrintError si falla."""
     spool_pdf_with_result(pdf_path, printer_name, copies=copies, dpi=dpi,
-                          sumatra_path=sumatra_path)
+                          sumatra_path=sumatra_path, dc_mode=dc_mode)
 
 
 def _print_via_sumatra(pdf_path: str, printer_name: str, copies: int,

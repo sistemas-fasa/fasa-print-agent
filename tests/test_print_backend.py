@@ -86,8 +86,9 @@ class RecordingBackend(PrintBackend):
     def list_printers(self):
         return ["PRN-TEST"]
 
-    def spool_pdf(self, pdf_path, printer_name, copies=1, dpi=300):
-        self.calls.append((pdf_path, printer_name, copies, dpi))
+    def spool_pdf(self, pdf_path, printer_name, copies=1, dpi=300,
+                  dc_mode="auto"):
+        self.calls.append((pdf_path, printer_name, copies, dpi, dc_mode))
         if printer_name != "PRN-TEST":
             raise PrintError("PRINTER_NOT_AVAILABLE", printer_name)
         return SpoolResult(printer_name, copies, 1, windows_job_id=42)
