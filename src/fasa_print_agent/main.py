@@ -20,6 +20,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help='Impresora a probar, ej. --test-printer "Remito Cuenta Corriente"')
     p.add_argument("--run-once", action="store_true",
                    help="Procesa un trabajo y sale")
+    p.add_argument("--panel", action="store_true",
+                   help="Abre el panel de escritorio (trabajos enviados)")
+    from .remito_cli import add_remito_args
+    add_remito_args(p)
     return p
 
 
@@ -30,6 +34,15 @@ def main(argv: list[str] | None = None) -> int:
                   cfg.log_max_bytes, cfg.log_backup_count)
 
     from . import diagnostics
+    from .print_history import history_path_for
+    from .remito_cli import dispatch_remito, has_remito_args
+    hpath = history_path_for(cfg.log_dir, cfg.history_file)
+    if args.panel:
+        from .desktop import run_panel
+        return run_panel(hpath, cfg.default_test_printer)
+    if has_remito_args(args):
+        rc = dispatch_remito(args, hpath)
+        return rc if rc is not None else 0
     if args.health_check:
         return diagnostics.health_check(cfg)
     if args.list_printers:

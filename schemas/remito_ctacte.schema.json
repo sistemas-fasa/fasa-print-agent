@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fasa.local/schemas/remito_ctacte.schema.json",
+  "title": "REMITO_CTACTE payload para FASA Print Agent",
+  "description": "Contenido de print_jobs.payload_json cuando documento_tipo=REMITO. El agente genera el PDF A5 y lo imprime. Ver docs/CONTRATO_ERP.md.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "numero": { "type": "string", "description": "Ej. 0004-00000956" },
+    "fecha": { "type": "string", "description": "Ej. 29/09/2026 (texto libre)" },
+    "cliente_nombre": { "type": "string" },
+    "cliente_codigo": { "type": "string", "description": "Se dibuja entre corchetes tras el nombre" },
+    "cliente_cuit": { "type": "string" },
+    "cliente_cond_iva": { "type": "string" },
+    "cliente_domicilio": { "type": "string" },
+    "cliente_telefono": { "type": "string" },
+    "cliente_cp": { "type": "string" },
+    "cliente_localidad": { "type": "string", "description": "Nombre ya resuelto (join con tabla localidad en el ERP)" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "cantidad": { "type": "string", "description": "Texto tal cual a imprimir, ej. 10,00" },
+          "articulo": { "type": "string" },
+          "detalle": { "type": "string" }
+        }
+      }
+    },
+    "observaciones": { "type": "string" },
+    "transp_nombre": { "type": "string" },
+    "transp_cuit": { "type": "string" },
+    "transp_domicilio": { "type": "string" },
+    "transp_chofer": { "type": "string" }
+  }
+}

@@ -8,6 +8,9 @@ histórica (`impresora_maquina` + `impresoras`) y envía el documento al
 spooler de Windows **sin intervención del operador**.
 
 Espec completa: `SPEC.md` (copia de `FASA_PRINT_AGENT_SPEC.md`).
+Contrato para `fasa-erp-web`: `docs/CONTRATO_ERP.md` (+
+`schemas/remito_ctacte.schema.json`, ejemplo en
+`fixtures/remito_ctacte_ejemplo.json`).
 
 ## Arquitectura
 
@@ -49,6 +52,25 @@ fasa-print-agent.exe --list-printers
 fasa-print-agent.exe --test-printer "Remito Cuenta Corriente"
 fasa-print-agent.exe --run-once
 ```
+
+Spike REMITO_CTACTE (A5, papel preimpreso — ver `docs/REMITO_SPIKE.md`):
+
+```text
+fasa-print-agent.exe --list-printers
+fasa-print-agent.exe --save-remito-pdf C:\Temp\remito-test.pdf --remito-json fixtures\remito_ctacte_ejemplo.json
+fasa-print-agent.exe --print-remito-pdf C:\Temp\remito-test.pdf --printer "Nombre impresora"
+fasa-print-agent.exe --print-remito-test --printer "Nombre impresora" --out C:\Temp\remito-test.pdf
+fasa-print-agent.exe --print-remito-test --printer "Nombre impresora" --offset-x 1.5 --offset-y -0.5
+```
+
+Panel de escritorio (ver trabajos enviados):
+
+```text
+fasa-print-agent.exe --panel
+```
+
+Lee el historial de `HISTORY_FILE` (defecto `<LOG_DIR>/print-history.jsonl`,
+`off` lo desactiva), lista impresoras y permite disparar un remito test.
 
 ## Estructura
 

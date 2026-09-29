@@ -8,6 +8,8 @@ license = { text = "Proprietary" }
 authors = [{ name = "FASA / Vogel" }]
 dependencies = [
   "pymysql>=1.1.0",
+  "reportlab>=4.0",
+  "pymupdf>=1.24",
   "pywin32>=306; sys_platform == 'win32'",
 ]
 

@@ -22,6 +22,8 @@ agent.env
 # Logs locales
 logs/
 *.log
+print-history.jsonl
+remito-test.pdf
 
 # Windows / editores
 Thumbs.db

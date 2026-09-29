@@ -1,13 +1,23 @@
-"""Worker de polling (SPEC §19): reclamar → resolver → imprimir → actualizar."""
+"""Worker de polling (SPEC §19): reclamar → resolver → imprimir → actualizar.
+
+Origen del documento (prioridad):
+1. `archivo_path`: PDF listo (legado / contingencia).
+2. `payload_json` + `documento_tipo=REMITO`: el agente genera el PDF A5
+   (ver docs/CONTRATO_ERP.md y fixtures/remito_ctacte_ejemplo.json).
+"""
 from __future__ import annotations
 
+import json
 import logging
+import tempfile
 import time
+from pathlib import Path
 from typing import Any
 
 from . import windows_print
 from .config import AgentConfig
 from .logging_config import job_extra
+from .print_history import history_path_for, record
 from .printer_resolver import (
     PrinterMappingNotFound,
     PrinterNotAvailable,
@@ -35,9 +45,50 @@ def _validate_job(job: dict[str, Any], cfg: AgentConfig) -> str | None:
         return "COPIAS_INVALIDAS"
     if copias < 1 or copias > cfg.max_copias:
         return "COPIAS_INVALIDAS"
-    if not job.get("archivo_path"):
-        return "ARCHIVO_FALTANTE"
+    if not job.get("archivo_path") and not job.get("payload_json"):
+        return "DOCUMENTO_FALTANTE"
     return None
+
+
+def _resolve_pdf_path(job: dict[str, Any]) -> tuple[str, Any | None]:
+    """Retorna (ruta_pdf, tmpdir). `tmpdir` no-None debe limpiarse tras
+    imprimir. Lanza `_PdfError` (con `.code`) si no hay documento útil."""
+    if job.get("archivo_path"):
+        return str(job["archivo_path"]), None
+    if str(job.get("documento_tipo", "")) != "REMITO":
+        raise _PdfError("GENERADOR_NO_SOPORTADO",
+                        f"Sin archivo y sin generador para "
+                        f"documento_tipo={job.get('documento_tipo')!r}")
+    raw = job.get("payload_json")
+    try:
+        data_dict = json.loads(raw) if isinstance(raw, str) else dict(raw or {})
+    except (json.JSONDecodeError, TypeError, ValueError) as e:
+        raise _PdfError("PAYLOAD_INVALIDO",
+                        f"payload_json no es JSON válido: {e}") from e
+    try:
+        from .remito_data import RemitoCtaCte
+        from .remito_pdf import build_remito_pdf
+
+        data = RemitoCtaCte.from_dict(data_dict)
+    except Exception as e:
+        raise _PdfError("PAYLOAD_INVALIDO",
+                        f"payload no mapea a REMITO_CTACTE: {e}") from e
+    tmp = tempfile.TemporaryDirectory(prefix="fasa-job-")
+    try:
+        out = build_remito_pdf(
+            data, Path(tmp.name) / f"remito-{job.get('id')}-"
+            f"{job.get('documento_id')}.pdf")
+    except Exception as e:
+        tmp.cleanup()
+        code = getattr(e, "code", "PDF_GENERACION_ERROR")
+        raise _PdfError(code, str(e)[:500]) from e
+    return str(out), tmp
+
+
+class _PdfError(Exception):
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
 
 
 def process_one(conn, cfg: AgentConfig) -> bool:
@@ -52,11 +103,15 @@ def process_one(conn, cfg: AgentConfig) -> bool:
     doc = f"{job.get('documento_tipo')}/{job.get('documento_id')}"
     ex = job_extra(cfg.agent_name, jid, estacion, tipo, doc, "?")
     t0 = time.monotonic()
+    hpath = history_path_for(cfg.log_dir, cfg.history_file)
+    base = {"source": "worker", "doc": doc, "estacion": estacion,
+            "tipo": tipo}
 
     invalid = _validate_job(job, cfg)
     if invalid:
         mark_error(conn, jid, invalid, f"Validación: {invalid}", retry=False)
         log.error("Job rechazado validación %s", invalid, extra=ex["extra"])
+        record(hpath, {**base, "result": "ERROR", "code": invalid})
         return True
 
     try:
@@ -64,6 +119,8 @@ def process_one(conn, cfg: AgentConfig) -> bool:
     except PrinterMappingNotFound as e:
         mark_error(conn, jid, "PRINTER_MAPPING_NOT_FOUND", str(e), retry=False)
         log.error("Sin mapping: %s", e, extra=ex["extra"])
+        record(hpath, {**base, "result": "ERROR",
+                       "code": "PRINTER_MAPPING_NOT_FOUND"})
         return True
     except Exception as e:  # DB u otro
         mark_error(conn, jid, "RESOLVER_ERROR",
@@ -89,9 +146,17 @@ def process_one(conn, cfg: AgentConfig) -> bool:
         log.warning("Sin backend Windows; spool simulado", extra=ex["extra"])
 
     try:
+        pdf_path, tmpdir = _resolve_pdf_path(job)
+    except _PdfError as e:
+        mark_error(conn, jid, e.code, str(e)[:2000], retry=False)
+        log.error("Documento no generable: %s", e, extra=ex["extra"])
+        record(hpath, {**base, "result": "ERROR", "code": e.code})
+        return True
+
+    try:
         mark_spooled(conn, jid, resolved.windows_name)
         windows_print.print_pdf(
-            str(job["archivo_path"]), resolved.windows_name,
+            pdf_path, resolved.windows_name,
             copies=int(job.get("copias", 1)),
             sumatra_path=cfg.sumatra_pdf_path,
             timeout=cfg.print_timeout_seconds,
@@ -106,11 +171,21 @@ def process_one(conn, cfg: AgentConfig) -> bool:
         retry = code not in ("FILE_NOT_FOUND", "NO_PRINT_BACKEND")
         mark_error(conn, jid, code, str(e)[:2000], retry=retry)
         log.error("Error imprimiendo: %s", e, extra=ex["extra"])
+        record(hpath, {**base, "printer": resolved.windows_name,
+                       "result": "ERROR", "code": code})
         return True
+    finally:
+        try:
+            if tmpdir is not None:
+                tmpdir.cleanup()
+        except Exception:
+            pass
 
     mark_printed(conn, jid)
     dt = time.monotonic() - t0
     log.info("RESULT=OK duracion=%.1fs", dt, extra=ex["extra"])
+    record(hpath, {**base, "printer": resolved.windows_name,
+                   "copies": int(job.get("copias", 1)), "result": "OK"})
     return True
 
 

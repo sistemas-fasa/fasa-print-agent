@@ -1,0 +1,24 @@
+{
+  "numero": "0004-00000956",
+  "fecha": "29/09/2026",
+  "cliente_nombre": "VOGEL JOSE OSCAR",
+  "cliente_codigo": "00040",
+  "cliente_cuit": "20-23347203-5",
+  "cliente_cond_iva": "",
+  "cliente_domicilio": "SUIZA S/N",
+  "cliente_telefono": "3743667526",
+  "cliente_cp": "",
+  "cliente_localidad": "GARUHAPE",
+  "items": [
+    {
+      "cantidad": "10,00",
+      "articulo": "PE00037",
+      "detalle": "Perfil T 25mm"
+    }
+  ],
+  "observaciones": "",
+  "transp_nombre": "CENTRAL ARGENTINO S.A.",
+  "transp_cuit": "30-54650428-6",
+  "transp_domicilio": "AV BUCHARDO 2413",
+  "transp_chofer": ""
+}
