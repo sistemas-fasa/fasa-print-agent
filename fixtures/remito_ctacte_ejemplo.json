@@ -5,10 +5,10 @@
   "cliente_codigo": "00040",
   "cliente_cuit": "20-23347203-5",
   "cliente_cond_iva": "",
-  "cliente_domicilio": "",
-  "cliente_telefono": "",
+  "cliente_domicilio": "SUIZA S/N",
+  "cliente_telefono": "3743667526",
   "cliente_cp": "",
-  "cliente_localidad": "",
+  "cliente_localidad": "GARUHAPE",
   "items": [
     {
       "cantidad": "10,00",
