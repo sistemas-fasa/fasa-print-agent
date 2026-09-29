@@ -112,6 +112,8 @@ issue de calibración para fijarlo como default.
   datos **derechos**. Estrategia: vertical + USER 1480x2100 → DC 204x142
   sin rotación del driver.
 - Job 7: `offset-y=3` (todo 3 mm abajo, primer ajuste pedido).
+- Job 8: layout consolidado (offset plegado, fecha 16→31 tras confirmar
+  que "120mm" era typo de 12mm). Todo validado salvo confirmación final.
 - Pendiente: verificar por zona con regla (número, cliente, ítems,
   transportista) y fijar posiciones finales en `remito_layout.py`.
 

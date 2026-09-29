@@ -45,17 +45,17 @@ class RemitoLayout:
     offset_y_mm: float = OFFSET_Y_MM
 
     # Zona superior derecha.
-    numero: Position = Position(163.0, 9.0)
-    fecha: Position = Position(163.0, 16.0)
+    numero: Position = Position(163.0, 12.0)
+    fecha: Position = Position(163.0, 31.0)
 
     # Cabecera de cliente.
-    cliente_nombre: Position = Position(28.0, 33.0)
-    cliente_codigo: Position = Position(28.0, 40.0)
-    cliente_cuit: Position = Position(148.0, 33.0)
-    cliente_cond_iva: Position = Position(148.0, 40.0)
+    cliente_nombre: Position = Position(28.0, 36.0)
+    cliente_codigo: Position = Position(28.0, 43.0)
+    cliente_cuit: Position = Position(148.0, 36.0)
+    cliente_cond_iva: Position = Position(148.0, 43.0)
 
     # Detalle de artículos (tabla, zona central).
-    items_origin: Position = Position(12.0, 55.0)
+    items_origin: Position = Position(12.0, 58.0)
     items_row_height_mm: float = 6.0
     items_max_rows: int = 10
     col_cantidad_x_mm: float = 12.0
@@ -66,13 +66,13 @@ class RemitoLayout:
     col_detalle_w_mm: float = 132.0
 
     # Mensajes / observaciones hacia el pie.
-    observaciones: Position = Position(12.0, 118.0)
+    observaciones: Position = Position(12.0, 121.0)
 
     # Pie: transportista.
-    transp_nombre: Position = Position(28.0, 126.0)
-    transp_cuit: Position = Position(140.0, 126.0)
-    transp_domicilio: Position = Position(28.0, 132.0)
-    transp_chofer: Position = Position(140.0, 132.0)
+    transp_nombre: Position = Position(28.0, 129.0)
+    transp_cuit: Position = Position(140.0, 129.0)
+    transp_domicilio: Position = Position(28.0, 135.0)
+    transp_chofer: Position = Position(140.0, 135.0)
 
     # Tipografías (pt).
     font_numero_size: float = 13.0
