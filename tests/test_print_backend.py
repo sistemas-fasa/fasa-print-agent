@@ -16,6 +16,7 @@ from fasa_print_agent.print_backend import (  # noqa: E402
     _page_dest_rect,
     _save_pixmap_as_bmp,
     get_backend,
+    resolve_dc_mode,
 )
 
 
@@ -108,6 +109,15 @@ def test_get_backend_returns_simulated_off_windows(monkeypatch):
 
     monkeypatch.setattr(pb.os, "name", "posix")
     assert isinstance(get_backend(), SimulatedBackend)
+
+
+def test_resolve_dc_mode_quirk_and_override():
+    assert resolve_dc_mode("L395 Series(Network)") == "user-portrait"
+    assert resolve_dc_mode("l395") == "user-portrait"
+    assert resolve_dc_mode("RICOH P 311") == "auto"
+    assert resolve_dc_mode("L395 Series(Network)", "a5") == "a5"
+    assert resolve_dc_mode("L395 Series(Network)", "user-landscape") == \
+        "user-landscape"
 
 
 def test_is_a5_size_accepts_physical_and_printable_area():

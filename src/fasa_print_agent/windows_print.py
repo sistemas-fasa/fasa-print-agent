@@ -16,7 +16,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from .print_backend import PrintError, SpoolResult, get_backend
+from .print_backend import PrintError, SpoolResult, get_backend, resolve_dc_mode
 
 __all__ = ["PrintError", "SpoolResult", "list_printers", "printer_exists",
            "print_pdf", "spool_pdf_with_result"]
@@ -46,7 +46,9 @@ def spool_pdf_with_result(pdf_path: str, printer_name: str, copies: int = 1,
                            pages_spooled=0, windows_job_id=0)
 
     return get_backend().spool_pdf(str(pdf), printer_name,
-                                   copies=copies, dpi=dpi, dc_mode=dc_mode)
+                                   copies=copies, dpi=dpi,
+                                   dc_mode=resolve_dc_mode(printer_name,
+                                                           dc_mode))
 
 
 def print_pdf(pdf_path: str, printer_name: str, copies: int = 1,

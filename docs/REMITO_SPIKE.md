@@ -104,6 +104,17 @@ issue de calibración para fijarlo como default.
 - Si el papel sale en blanco o desplazado: es calibración
   (paso 5), no reintentar como error de spooler.
 
+## Bitácora de calibración L395 (papel preimpreso real)
+
+- Job 1-2 (apaisado + tamaño usuario): datos **rotados 90°**. Causa: la
+  L395 no trae A5 y su driver rota los jobs apaisados con tamaño custom.
+- Job 5-7 (`--dc-mode user-portrait`, luego default por quirk `L395`):
+  datos **derechos**. Estrategia: vertical + USER 1480x2100 → DC 204x142
+  sin rotación del driver.
+- Job 7: `offset-y=3` (todo 3 mm abajo, primer ajuste pedido).
+- Pendiente: verificar por zona con regla (número, cliente, ítems,
+  transportista) y fijar posiciones finales en `remito_layout.py`.
+
 ## Decisiones técnicas del spike (verificadas 29/09/2026)
 
 - Sin `ShellExecute("print")`: dependía del visor PDF asociado y sus

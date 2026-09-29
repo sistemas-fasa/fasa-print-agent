@@ -370,6 +370,24 @@ def get_backend() -> PrintBackend:
 
 
 # --- DEVMODE por-job vía ctypes (solo Windows) ---
+
+# Quirks por impresora (subcadena en mayúsculas -> dc_mode por defecto).
+# L395: sin A5 en su lista y rota los jobs apaisados con tamaño usuario
+# (verificado en papel 29/09/2026: user-portrait sale derecho).
+PRINTER_DC_MODE_OVERRIDES: dict[str, str] = {
+    "L395": "user-portrait",
+}
+
+
+def resolve_dc_mode(printer_name: str, requested: str = "auto") -> str:
+    """Modo DC efectivo. Explícito > quirk por impresora > auto."""
+    if requested and requested != "auto":
+        return requested
+    upper = (printer_name or "").upper()
+    for key, mode in PRINTER_DC_MODE_OVERRIDES.items():
+        if key in upper:
+            return mode
+    return "auto"
 # pywin32 312: `CDC.CreatePrinterDC(nombre)` NO acepta DEVMODE (1 solo
 # argumento) y `win32print.DocumentProperties` exige objetos PyDEVMODE,
 # no buffers. Por eso se llama directo a winspool/gdi32: se obtiene el
