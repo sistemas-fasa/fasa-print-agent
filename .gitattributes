@@ -1,0 +1,4 @@
+# Binarios: sin conversión CRLF ni diff textual.
+*.pdf binary
+*.bmp binary
+*.png binary
