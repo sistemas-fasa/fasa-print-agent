@@ -8,6 +8,9 @@ histórica (`impresora_maquina` + `impresoras`) y envía el documento al
 spooler de Windows **sin intervención del operador**.
 
 Espec completa: `SPEC.md` (copia de `FASA_PRINT_AGENT_SPEC.md`).
+Contrato para `fasa-erp-web`: `docs/CONTRATO_ERP.md` (+
+`schemas/remito_ctacte.schema.json`, ejemplo en
+`fixtures/remito_ctacte_ejemplo.json`).
 
 ## Arquitectura
 

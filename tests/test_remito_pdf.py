@@ -84,6 +84,26 @@ def test_cliente_extendido_y_titulos_items(tmp_path):
         assert title in text, title
 
 
+def test_fixture_conforma_al_schema_erp():
+    """El ejemplo del contrato trae la forma que el ERP debe enviar."""
+    schema = json.loads((REPO / "schemas" / "remito_ctacte.schema.json")
+                        .read_text(encoding="utf-8"))
+    raw = json.loads((REPO / "fixtures" / "remito_ctacte_ejemplo.json")
+                     .read_text(encoding="utf-8"))
+    assert set(schema["properties"]) >= {
+        "numero", "fecha", "cliente_nombre", "cliente_codigo",
+        "cliente_cuit", "cliente_cond_iva", "cliente_domicilio",
+        "cliente_telefono", "cliente_cp", "cliente_localidad",
+        "items", "observaciones", "transp_nombre", "transp_cuit",
+        "transp_domicilio", "transp_chofer",
+    }
+    assert set(raw) >= set(schema["properties"]) - set()
+    for key in ("numero", "cliente_nombre", "items"):
+        assert raw[key], key
+    assert isinstance(raw["items"], list) and raw["items"]
+    assert set(raw["items"][0]) >= {"cantidad", "articulo", "detalle"}
+
+
 def test_repo_fixture_matches_sample():
     raw = json.loads((REPO / "fixtures" / "remito_ctacte_ejemplo.json")
                      .read_text(encoding="utf-8"))
