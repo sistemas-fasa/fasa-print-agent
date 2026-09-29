@@ -62,6 +62,28 @@ def test_build_pdf_text_extractable_with_fixture_data(tmp_path):
         assert expected in text, expected
 
 
+def test_cliente_extendido_y_titulos_items(tmp_path):
+    import fitz
+
+    data = sample_fixture()
+    data.cliente_domicilio = "AV MITRE 123"
+    data.cliente_telefono = "3743-511809"
+    data.cliente_cp = "3333"
+    data.cliente_localidad = "PUERTO RICO"
+    out = build_remito_pdf(data, tmp_path / "ext.pdf")
+    doc = fitz.open(str(out))
+    try:
+        text = doc[0].get_text()
+    finally:
+        doc.close()
+    assert "VOGEL JOSE OSCAR [00040]" in text
+    assert "AV MITRE 123" in text
+    assert "3743-511809" in text
+    assert "3333 - PUERTO RICO" in text
+    for title in ("CANTIDAD", "ARTICULO", "DETALLE"):
+        assert title in text, title
+
+
 def test_repo_fixture_matches_sample():
     raw = json.loads((REPO / "fixtures" / "remito_ctacte_ejemplo.json")
                      .read_text(encoding="utf-8"))
@@ -113,10 +135,10 @@ def test_build_pdf_deterministic_positions_with_offset(tmp_path):
             doc.close()
 
     base_xy = origin_of(RemitoLayout())
-    moved_xy = origin_of(RemitoLayout().with_offsets(5.0, 5.0))
+    moved_xy = origin_of(RemitoLayout().with_offsets(2.0, 2.0))
     # El número de remito aparece en ambos; sus coordenadas difieren en
-    # 5mm→puntos en X y +5mm→puntos en Y (fitz usa origen arriba-izquierda,
+    # 2mm→puntos en X y +2mm→puntos en Y (fitz usa origen arriba-izquierda,
     # Y hacia abajo, igual que el layout físico).
     k = MM_TO_PT
-    assert abs((moved_xy[0] - base_xy[0]) - 5.0 * k) < 1.0
-    assert abs((moved_xy[1] - base_xy[1]) - 5.0 * k) < 1.0
+    assert abs((moved_xy[0] - base_xy[0]) - 2.0 * k) < 1.0
+    assert abs((moved_xy[1] - base_xy[1]) - 2.0 * k) < 1.0

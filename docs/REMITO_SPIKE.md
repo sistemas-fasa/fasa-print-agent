@@ -114,6 +114,9 @@ issue de calibración para fijarlo como default.
 - Job 7: `offset-y=3` (todo 3 mm abajo, primer ajuste pedido).
 - Job 8: layout consolidado (offset plegado, fecha 16→31 tras confirmar
   que "120mm" era typo de 12mm). Todo validado salvo confirmación final.
+- Ronda 2 (sin imprimir aún): código entre corchetes tras el nombre;
+  domicilio/teléfono/CP+localidad del cliente; títulos CANTIDAD/ARTICULO/
+  DETALLE; pie transportista +10mm con CUIT en x=90 (50mm a la izq.).
 - Pendiente: verificar por zona con regla (número, cliente, ítems,
   transportista) y fijar posiciones finales en `remito_layout.py`.
 

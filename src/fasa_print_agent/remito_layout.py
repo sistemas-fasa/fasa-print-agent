@@ -48,13 +48,17 @@ class RemitoLayout:
     numero: Position = Position(163.0, 12.0)
     fecha: Position = Position(163.0, 31.0)
 
-    # Cabecera de cliente.
+    # Cabecera de cliente. El código se dibuja entre corchetes luego del
+    # nombre ("NOMBRE [CODIGO]"), no en renglón propio.
     cliente_nombre: Position = Position(28.0, 36.0)
-    cliente_codigo: Position = Position(28.0, 43.0)
+    cliente_domicilio: Position = Position(28.0, 42.0)
+    cliente_telefono: Position = Position(28.0, 47.0)
+    cliente_localidad: Position = Position(100.0, 47.0)
     cliente_cuit: Position = Position(148.0, 36.0)
     cliente_cond_iva: Position = Position(148.0, 43.0)
 
     # Detalle de artículos (tabla, zona central).
+    items_header_y_mm: float = 53.0
     items_origin: Position = Position(12.0, 58.0)
     items_row_height_mm: float = 6.0
     items_max_rows: int = 10
@@ -68,11 +72,12 @@ class RemitoLayout:
     # Mensajes / observaciones hacia el pie.
     observaciones: Position = Position(12.0, 121.0)
 
-    # Pie: transportista.
-    transp_nombre: Position = Position(28.0, 129.0)
-    transp_cuit: Position = Position(140.0, 129.0)
-    transp_domicilio: Position = Position(28.0, 135.0)
-    transp_chofer: Position = Position(140.0, 135.0)
+    # Pie: transportista (bajado 10 mm el 29/09/2026; CUIT además
+    # 50 mm a la izquierda).
+    transp_nombre: Position = Position(28.0, 139.0)
+    transp_cuit: Position = Position(90.0, 139.0)
+    transp_domicilio: Position = Position(28.0, 145.0)
+    transp_chofer: Position = Position(140.0, 145.0)
 
     # Tipografías (pt).
     font_numero_size: float = 13.0
@@ -95,7 +100,8 @@ class RemitoLayout:
         """Posiciones puntuales (con offset aplicado) para chequeo de bordes."""
         names = [
             "numero", "fecha",
-            "cliente_nombre", "cliente_codigo",
+            "cliente_nombre", "cliente_domicilio",
+            "cliente_telefono", "cliente_localidad",
             "cliente_cuit", "cliente_cond_iva",
             "observaciones",
             "transp_nombre", "transp_cuit",
@@ -125,6 +131,7 @@ class RemitoLayout:
         out: dict = {
             "offset_x_mm": self.offset_x_mm,
             "offset_y_mm": self.offset_y_mm,
+            "items_header_y_mm": self.items_header_y_mm,
             "items_row_height_mm": self.items_row_height_mm,
             "items_max_rows": self.items_max_rows,
             "col_cantidad_x_mm": self.col_cantidad_x_mm,

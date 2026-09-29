@@ -35,6 +35,12 @@ class RemitoCtaCte:
     cliente_codigo: str = ""
     cliente_cuit: str = ""
     cliente_cond_iva: str = ""
+    # Datos extendidos del cliente. `cliente_localidad` llega ya resuelto
+    # (en el ERP: join con la tabla `localidad`); el agente solo lo dibuja.
+    cliente_domicilio: str = ""
+    cliente_telefono: str = ""
+    cliente_cp: str = ""
+    cliente_localidad: str = ""
     items: list[RemitoItem] = field(default_factory=list)
     observaciones: str = ""
     transp_nombre: str = ""
@@ -52,6 +58,10 @@ class RemitoCtaCte:
             cliente_codigo=str(data.get("cliente_codigo", "")),
             cliente_cuit=str(data.get("cliente_cuit", "")),
             cliente_cond_iva=str(data.get("cliente_cond_iva", "")),
+            cliente_domicilio=str(data.get("cliente_domicilio", "")),
+            cliente_telefono=str(data.get("cliente_telefono", "")),
+            cliente_cp=str(data.get("cliente_cp", "")),
+            cliente_localidad=str(data.get("cliente_localidad", "")),
             items=items,
             observaciones=str(data.get("observaciones", "")),
             transp_nombre=str(data.get("transp_nombre", "")),
@@ -68,6 +78,10 @@ class RemitoCtaCte:
             "cliente_codigo": self.cliente_codigo,
             "cliente_cuit": self.cliente_cuit,
             "cliente_cond_iva": self.cliente_cond_iva,
+            "cliente_domicilio": self.cliente_domicilio,
+            "cliente_telefono": self.cliente_telefono,
+            "cliente_cp": self.cliente_cp,
+            "cliente_localidad": self.cliente_localidad,
             "items": [i.to_dict() for i in self.items],
             "observaciones": self.observaciones,
             "transp_nombre": self.transp_nombre,

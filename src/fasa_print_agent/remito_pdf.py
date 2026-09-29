@@ -76,15 +76,36 @@ def build_remito_pdf(data: RemitoCtaCte, output_path: str | Path,
     p = lay.fecha
     text(p.x_mm, p.y_mm, data.fecha, lay.font_base_size)
 
-    # Cliente.
+    # Cliente: nombre con código entre corchetes, más datos extendidos.
+    nombre = data.cliente_nombre or ""
+    if data.cliente_codigo:
+        nombre = f"{nombre} [{data.cliente_codigo}]" if nombre else \
+            f"[{data.cliente_codigo}]"
     text(lay.cliente_nombre.x_mm, lay.cliente_nombre.y_mm,
-         data.cliente_nombre, lay.font_base_size, bold=True, max_width_mm=110.0)
-    text(lay.cliente_codigo.x_mm, lay.cliente_codigo.y_mm,
-         data.cliente_codigo, lay.font_base_size)
+         nombre, lay.font_base_size, bold=True, max_width_mm=110.0)
+    text(lay.cliente_domicilio.x_mm, lay.cliente_domicilio.y_mm,
+         data.cliente_domicilio, lay.font_base_size, max_width_mm=110.0)
+    text(lay.cliente_telefono.x_mm, lay.cliente_telefono.y_mm,
+         data.cliente_telefono, lay.font_base_size, max_width_mm=65.0)
+    localidad = data.cliente_localidad or ""
+    if data.cliente_cp:
+        localidad = f"{data.cliente_cp} - {localidad}" if localidad else \
+            data.cliente_cp
+    text(lay.cliente_localidad.x_mm, lay.cliente_localidad.y_mm,
+         localidad, lay.font_base_size, max_width_mm=95.0)
     text(lay.cliente_cuit.x_mm, lay.cliente_cuit.y_mm,
          data.cliente_cuit, lay.font_base_size)
     text(lay.cliente_cond_iva.x_mm, lay.cliente_cond_iva.y_mm,
          data.cliente_cond_iva, lay.font_base_size)
+
+    # Títulos de columnas del detalle.
+    hy = lay.items_header_y_mm
+    text(lay.col_cantidad_x_mm + lay.col_cantidad_w_mm, hy,
+         "CANTIDAD", lay.font_items_size, bold=True, align="right")
+    text(lay.col_articulo_x_mm, hy,
+         "ARTICULO", lay.font_items_size, bold=True, max_width_mm=26.0)
+    text(lay.col_detalle_x_mm, hy,
+         "DETALLE", lay.font_items_size, bold=True, max_width_mm=130.0)
 
     # Ítems (zona central).
     for i, item in enumerate(data.items[: lay.items_max_rows]):

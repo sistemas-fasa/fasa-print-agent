@@ -5,6 +5,10 @@
   "cliente_codigo": "00040",
   "cliente_cuit": "20-23347203-5",
   "cliente_cond_iva": "",
+  "cliente_domicilio": "",
+  "cliente_telefono": "",
+  "cliente_cp": "",
+  "cliente_localidad": "",
   "items": [
     {
       "cantidad": "10,00",
