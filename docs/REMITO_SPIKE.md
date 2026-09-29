@@ -1,0 +1,117 @@
+# Spike REMITO_CTACTE — procedimiento en SERVERFASA
+
+Objetivo: demostrar que SERVERFASA imprime un remito A5 (210 x 148 mm,
+solo datos variables sobre papel preimpreso) en una impresora Windows
+real, sin navegador, sin Adobe, sin diálogos.
+
+## 0. Preparar
+
+```powershell
+cd C:\FASA\fasa-print-agent
+git pull
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+```
+
+Papel: remito preimpreso A5 cargado en la impresora de prueba.
+Bandeja/driver: tamaño **A5 apaisado**. El agente fija A5 apaisado vía
+DEVMODE en memoria y avisa en logs (`PRINTER_CAPS ... no es A5`) si el
+driver informa otro tamaño.
+
+## 1. Listar impresoras (cuenta del agente)
+
+```powershell
+python -m fasa_print_agent.main --list-printers
+```
+
+Anotar el nombre EXACTO, ej. `L395 Series(Network)`.
+Si la impresora no aparece: es problema de cuenta del servicio
+(SPEC §23) — validar antes de seguir.
+
+## 2. Generar el remito de prueba (sin imprimir)
+
+```powershell
+python -m fasa_print_agent.main --save-remito-pdf C:\Temp\remito-test.pdf --remito-json fixtures\remito_ctacte_ejemplo.json
+```
+
+Respuesta esperada: `GENERADO_OK: C:\Temp\remito-test.pdf ...`.
+
+## 3. Inspeccionar el PDF
+
+Abrir `C:\Temp\remito-test.pdf` y verificar: página de 210 x 148 mm,
+solo datos variables (número arriba-derecha, cliente, ítem, pie de
+transportista). Sin logo ni formulario: eso ya está preimpreso.
+
+## 4. Imprimir ese mismo remito
+
+```powershell
+python -m fasa_print_agent.main --print-remito-pdf C:\Temp\remito-test.pdf --printer "NOMBRE EXACTO"
+```
+
+Respuesta esperada: `SPOOL_OK: ... windows_job_id=N` seguido de
+`ENVIADO_SPOOLER: Windows aceptó el trabajo. Verificar papel físico.`
+
+Atajo (genera + imprime en un paso):
+
+```powershell
+python -m fasa_print_agent.main --print-remito-test --printer "NOMBRE EXACTO" --out C:\Temp\remito-test.pdf
+```
+
+Solo generar (equivalente al paso 2):
+
+```powershell
+python -m fasa_print_agent.main --print-remito-test --no-print --out C:\Temp\remito-test.pdf
+```
+
+## 5. Calibrar (±1/2 mm con regla sobre el papel impreso)
+
+Desvío global (no toca código):
+
+```powershell
+python -m fasa_print_agent.main --print-remito-test --printer "NOMBRE" --out C:\Temp\remito-test.pdf --offset-x 1.5 --offset-y -0.5
+```
+
+Posiciones individuales: exportar, editar y reusar el layout:
+
+```powershell
+python -m fasa_print_agent.main --write-remito-layout C:\Temp\remito-layout.json
+# editar x_mm/y_mm con un editor, luego:
+python -m fasa_print_agent.main --save-remito-pdf C:\Temp\remito-test.pdf --layout-json C:\Temp\remito-layout.json
+```
+
+Origen de coordenadas: esquina superior izquierda, X→derecha,
+Y→abajo, todo en mm (`src/fasa_print_agent/remito_layout.py`).
+Posiciones definitivas: volcar el `remito-layout.json` calibrado al
+issue de calibración para fijarlo como default.
+
+## 6. Logs y diagnóstico
+
+- Consola: líneas `GENERADO_OK` / `SPOOL_OK` / `SPOOL_ERROR code=...`, más
+  `PRINTER_CAPS <impresora> papel=...` (verifica A5 210x148 del driver).
+- Archivo: `C:\ProgramData\FASA Print Agent\logs\fasa-print-agent.log`
+  (rotativo, ver `LOG_DIR` en `.env`).
+- Códigos de error: `FILE_NOT_FOUND`, `PRINTER_NOT_AVAILABLE`,
+  `SPOOLER_REJECTED`, `SPOOLER_ERROR`, `RENDER_ERROR`, `PDF_INVALID`,
+  `NO_PRINT_BACKEND` (esto último = no estás en Windows).
+
+## 7. Semántica (importante)
+
+- `GENERADO_OK` = PDF creado, nada enviado.
+- `SPOOL_OK` / `windows_job_id=N` = el spooler de Windows aceptó el
+  trabajo. NO afirma que el papel salió: Windows no lo confirma de
+  forma fiable. Verificar físicamente.
+- Si el papel sale en blanco o desplazado: es calibración
+  (paso 5), no reintentar como error de spooler.
+
+## Decisiones técnicas del spike
+
+- Sin `ShellExecute("print")`: dependía del visor PDF asociado y sus
+  diálogos; inaceptable desde un servicio.
+- Sin SumatraPDF obligatorio: quedó solo como fallback explícito si
+  `SUMATRA_PDF_PATH` está configurado.
+- Mecanismo: PyMuPDF rasteriza a BMP 24-bit (escritor propio, sin
+  Pillow) → GDI `StretchBlt` sobre DC con DEVMODE A5 apaisado en
+  memoria (no persiste cambios en la impresora).
+- Generación (reportlab, multiplataforma) separada del envío (GDI,
+  solo Windows) detrás de la interfaz `PrintBackend`.
