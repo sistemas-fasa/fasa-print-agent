@@ -47,7 +47,7 @@ class RemitoLayout:
     # Zona superior derecha (número bajado 15 mm el 29/09/2026: tapaba
     # el Nº preimpreso).
     numero: Position = Position(163.0, 30.0)
-    fecha: Position = Position(163.0, 39.0)
+    fecha: Position = Position(163.0, 37.0)
 
     # Cabecera de cliente. El código se dibuja entre corchetes luego del
     # nombre ("NOMBRE [CODIGO]"), no en renglón propio.
@@ -55,8 +55,9 @@ class RemitoLayout:
     cliente_domicilio: Position = Position(28.0, 42.0)
     cliente_telefono: Position = Position(28.0, 47.0)
     cliente_localidad: Position = Position(100.0, 47.0)
-    cliente_cuit: Position = Position(148.0, 41.0)
-    cliente_cond_iva: Position = Position(148.0, 48.0)
+    # Columna derecha alineada a la misma izquierda (x=163).
+    cliente_cuit: Position = Position(163.0, 41.0)
+    cliente_cond_iva: Position = Position(163.0, 48.0)
 
     # Detalle de artículos (tabla, zona central).
     items_header_y_mm: float = 53.0
