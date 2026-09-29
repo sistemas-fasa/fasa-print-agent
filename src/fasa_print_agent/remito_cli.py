@@ -97,7 +97,7 @@ def load_layout(args: argparse.Namespace) -> RemitoLayout:
     return layout.with_offsets(float(dx), float(dy))
 
 
-def dispatch_remito(args: argparse.Namespace) -> int | None:
+def dispatch_remito(args: argparse.Namespace, hpath=None) -> int | None:
     """Retorna código de salida si se consumió un comando remito, None si no."""
     if args.write_remito_fixture:
         out = Path(args.write_remito_fixture)
@@ -114,9 +114,9 @@ def dispatch_remito(args: argparse.Namespace) -> int | None:
     if args.save_remito_pdf:
         return cmd_save_remito(args)
     if args.print_remito_pdf:
-        return cmd_print_pdf(args)
+        return cmd_print_pdf(args, hpath)
     if args.print_remito_test:
-        return cmd_print_test(args)
+        return cmd_print_test(args, hpath)
     return None
 
 
@@ -138,8 +138,10 @@ def cmd_save_remito(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_print_pdf(args: argparse.Namespace) -> int:
+def cmd_print_pdf(args: argparse.Namespace, hpath=None) -> int:
     from . import windows_print
+    from .print_backend import resolve_dc_mode
+    from .print_history import record
 
     printer = args.printer
     if not printer:
@@ -155,16 +157,25 @@ def cmd_print_pdf(args: argparse.Namespace) -> int:
         print(f"SPOOL_ERROR code={e.code}: {e}", file=sys.stderr)
         log.error("RESULT=ERROR code=%s printer=%s pdf=%s err=%s",
                   e.code, printer, args.print_remito_pdf, e)
+        record(hpath, {"source": "cli", "doc": Path(args.print_remito_pdf).name,
+                       "pdf": args.print_remito_pdf, "printer": printer,
+                       "copies": args.copies, "result": "ERROR",
+                       "code": e.code, "error": str(e)[:500]})
         return 1
     dt = time.monotonic() - t0
     print(f"SPOOL_OK: {args.print_remito_pdf} -> {res.printer_name!r} "
           f"copias={res.copies} paginas={res.pages_spooled} "
           f"windows_job_id={res.windows_job_id} ({dt:.1f}s)")
     print("ENVIADO_SPOOLER: Windows aceptó el trabajo. Verificar papel físico.")
+    record(hpath, {"source": "cli", "doc": Path(args.print_remito_pdf).name,
+                   "pdf": args.print_remito_pdf, "printer": res.printer_name,
+                   "copies": res.copies, "dpi": args.dpi,
+                   "dc_mode": resolve_dc_mode(printer, args.dc_mode),
+                   "result": "OK", "windows_job_id": res.windows_job_id})
     return 0
 
 
-def cmd_print_test(args: argparse.Namespace) -> int:
+def cmd_print_test(args: argparse.Namespace, hpath=None) -> int:
     data = load_remito_data(args.remito_json)
     layout = load_layout(args)
     out_path = args.out or "remito-test.pdf"
@@ -181,4 +192,4 @@ def cmd_print_test(args: argparse.Namespace) -> int:
                   "o --no-print para silenciar este aviso).")
         return 0
     args.print_remito_pdf = str(out)
-    return cmd_print_pdf(args)
+    return cmd_print_pdf(args, hpath)

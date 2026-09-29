@@ -60,6 +60,15 @@ fasa-print-agent.exe --print-remito-test --printer "Nombre impresora" --out C:\T
 fasa-print-agent.exe --print-remito-test --printer "Nombre impresora" --offset-x 1.5 --offset-y -0.5
 ```
 
+Panel de escritorio (ver trabajos enviados):
+
+```text
+fasa-print-agent.exe --panel
+```
+
+Lee el historial de `HISTORY_FILE` (defecto `<LOG_DIR>/print-history.jsonl`,
+`off` lo desactiva), lista impresoras y permite disparar un remito test.
+
 ## Estructura
 
 ```text

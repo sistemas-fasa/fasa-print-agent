@@ -104,6 +104,18 @@ issue de calibración para fijarlo como default.
 - Si el papel sale en blanco o desplazado: es calibración
   (paso 5), no reintentar como error de spooler.
 
+## Panel de escritorio (ver trabajos enviados)
+
+```powershell
+python -m fasa_print_agent.main --panel
+```
+
+Ventana tkinter (stdlib, sin dependencias): tabla de trabajos con
+auto-refresh (fecha, documento, impresora, copias, OK/ERROR, job id),
+lista de impresoras y botón de remito test. Lee
+`<LOG_DIR>/print-history.jsonl` (configurable con `HISTORY_FILE`,
+`off` lo desactiva). CLI y worker registran cada envío/fracaso.
+
 ## Bitácora de calibración L395 (papel preimpreso real)
 
 - Job 1-2 (apaisado + tamaño usuario): datos **rotados 90°**. Causa: la

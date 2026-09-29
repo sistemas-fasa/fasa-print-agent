@@ -72,6 +72,10 @@ class AgentConfig:
     log_max_bytes: int = 5_242_880
     log_backup_count: int = 7
 
+    # Historial de trabajos para el tablero. Vacío = <log_dir>/print-history.jsonl.
+    # "off" lo desactiva.
+    history_file: str = ""
+
 
 def load_config(env_file: str | Path | None = None) -> AgentConfig:
     """Carga configuración. `env_file` explícito tiene prioridad para tests."""
@@ -101,4 +105,5 @@ def load_config(env_file: str | Path | None = None) -> AgentConfig:
         log_dir=_get("LOG_DIR", r"C:\ProgramData\FASA Print Agent\logs"),
         log_max_bytes=_get_int("LOG_MAX_BYTES", 5_242_880),
         log_backup_count=_get_int("LOG_BACKUP_COUNT", 7),
+        history_file=_get("HISTORY_FILE", ""),
     )

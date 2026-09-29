@@ -11,7 +11,8 @@ from conftest_fake import FakeConn, one, upd  # noqa: E402
 def _cfg(**kw):
     base = dict(agent_name="SERVERFASA",
                 allowed_tipos_impresion=["REMITO_CTACTE"],
-                allowed_documento_tipos=["REMITO"], max_copias=5)
+                allowed_documento_tipos=["REMITO"], max_copias=5,
+                history_file="off")
     base.update(kw)
     return AgentConfig(**base)
 

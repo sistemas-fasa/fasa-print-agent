@@ -8,6 +8,7 @@ from typing import Any
 from . import windows_print
 from .config import AgentConfig
 from .logging_config import job_extra
+from .print_history import history_path_for, record
 from .printer_resolver import (
     PrinterMappingNotFound,
     PrinterNotAvailable,
@@ -52,11 +53,15 @@ def process_one(conn, cfg: AgentConfig) -> bool:
     doc = f"{job.get('documento_tipo')}/{job.get('documento_id')}"
     ex = job_extra(cfg.agent_name, jid, estacion, tipo, doc, "?")
     t0 = time.monotonic()
+    hpath = history_path_for(cfg.log_dir, cfg.history_file)
+    base = {"source": "worker", "doc": doc, "estacion": estacion,
+            "tipo": tipo}
 
     invalid = _validate_job(job, cfg)
     if invalid:
         mark_error(conn, jid, invalid, f"Validación: {invalid}", retry=False)
         log.error("Job rechazado validación %s", invalid, extra=ex["extra"])
+        record(hpath, {**base, "result": "ERROR", "code": invalid})
         return True
 
     try:
@@ -64,6 +69,8 @@ def process_one(conn, cfg: AgentConfig) -> bool:
     except PrinterMappingNotFound as e:
         mark_error(conn, jid, "PRINTER_MAPPING_NOT_FOUND", str(e), retry=False)
         log.error("Sin mapping: %s", e, extra=ex["extra"])
+        record(hpath, {**base, "result": "ERROR",
+                       "code": "PRINTER_MAPPING_NOT_FOUND"})
         return True
     except Exception as e:  # DB u otro
         mark_error(conn, jid, "RESOLVER_ERROR",
@@ -106,11 +113,15 @@ def process_one(conn, cfg: AgentConfig) -> bool:
         retry = code not in ("FILE_NOT_FOUND", "NO_PRINT_BACKEND")
         mark_error(conn, jid, code, str(e)[:2000], retry=retry)
         log.error("Error imprimiendo: %s", e, extra=ex["extra"])
+        record(hpath, {**base, "printer": resolved.windows_name,
+                       "result": "ERROR", "code": code})
         return True
 
     mark_printed(conn, jid)
     dt = time.monotonic() - t0
     log.info("RESULT=OK duracion=%.1fs", dt, extra=ex["extra"])
+    record(hpath, {**base, "printer": resolved.windows_name,
+                   "copies": int(job.get("copias", 1)), "result": "OK"})
     return True
 
 
