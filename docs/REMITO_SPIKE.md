@@ -117,6 +117,12 @@ issue de calibración para fijarlo como default.
 - Ronda 2 (sin imprimir aún): código entre corchetes tras el nombre;
   domicilio/teléfono/CP+localidad del cliente; títulos CANTIDAD/ARTICULO/
   DETALLE; pie transportista +10mm con CUIT en x=90 (50mm a la izq.).
+- Jobs 9-13: calibración fina por zona. Layout final validado en papel
+  (L395, 29/09/2026): numero (163,30), fecha (163,37), cliente
+  nombre+domicilio+tels (28,36/42/47) y localidad (100,47), columna
+  derecha en x=163 (cuit 41, cond IVA 48), títulos ítems y=53, detalle
+  y=58, observaciones (12,121), transportista (28,139)/(90,139) y
+  domicilio/chofer (28,145)/(140,145). **Calibración OK en papel.**
 - Pendiente: verificar por zona con regla (número, cliente, ítems,
   transportista) y fijar posiciones finales en `remito_layout.py`.
 
