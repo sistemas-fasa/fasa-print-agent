@@ -44,8 +44,9 @@ class RemitoLayout:
     offset_x_mm: float = OFFSET_X_MM
     offset_y_mm: float = OFFSET_Y_MM
 
-    # Zona superior derecha.
-    numero: Position = Position(163.0, 12.0)
+    # Zona superior derecha (número bajado 15 mm el 29/09/2026: tapaba
+    # el Nº preimpreso).
+    numero: Position = Position(163.0, 27.0)
     fecha: Position = Position(163.0, 31.0)
 
     # Cabecera de cliente. El código se dibuja entre corchetes luego del
